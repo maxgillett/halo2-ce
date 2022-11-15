@@ -54,8 +54,8 @@ cfg-if = "0.1"
 num-integer = "0.1"
 num-bigint = { version = "0.4", features = ["rand"] }
 
-ff = { path = "../arithmetic/ff" }
-group = { path = "../arithmetic/group" }
+ff = { version = "0.12" }
+group = { version = "0.12" }
 curves = { path = "../arithmetic/curves" }
 poseidon = { path = "../primitives/poseidon" }
 
