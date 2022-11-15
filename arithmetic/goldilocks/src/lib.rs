@@ -2,4 +2,6 @@
 //! Credit: the majority of the code is borrowed or inspired from Plonky2 with modifications.
 
 mod fp;
+#[cfg(test)]
+mod tests;
 mod util;

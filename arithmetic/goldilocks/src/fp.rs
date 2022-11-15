@@ -1,13 +1,29 @@
-use crate::util::assume;
 use crate::util::{add_no_canonicalize_trashing_input, branch_hint, split};
+use crate::util::{assume, try_inverse_u64};
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::fmt::{Display, Formatter};
 use ff::{Field, PrimeField};
 use rand_core::RngCore;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
 /// Goldilocks field with modulus 2^64 - 2^32 + 1.
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+/// A Goldilocks field may store a non-canonical form of the element
+/// where the value can be between 0 and 2^64.
+/// For unique representation of its form, use `to_canonical_u64`
+#[derive(Clone, Copy, Debug, Default, Eq)]
 pub struct Goldilocks(u64);
+
+impl PartialEq for Goldilocks {
+    fn eq(&self, other: &Goldilocks) -> bool {
+        self.to_canonical_u64() == other.to_canonical_u64()
+    }
+}
+
+impl Display for Goldilocks {
+    fn fmt(&self, w: &mut Formatter<'_>) -> Result<(), std::fmt::Error> { 
+        write!(w, "{}", self.0)
+     }
+}
 
 /// 2^64 - 2^32 + 1
 pub const MODULUS: u64 = 0xffffffff00000001;
@@ -16,6 +32,7 @@ pub const EPSILON: u64 = 0xffffffff;
 
 impl Field for Goldilocks {
     /// Returns an element chosen uniformly at random using a user-provided RNG.
+    /// Note: this sampler is not constant time!
     fn random(mut rng: impl RngCore) -> Self {
         let mut res = rng.next_u64();
         while res >= MODULUS {
@@ -49,20 +66,33 @@ impl Field for Goldilocks {
     /// Doubles this element.
     #[must_use]
     fn double(&self) -> Self {
-        let (res, carry) = self.0.overflowing_shl(1);
-        Self(res + EPSILON * (carry as u64))
+        * self + *self
     }
 
     /// Computes the multiplicative inverse of this element,
     /// failing if the element is zero.
     fn invert(&self) -> CtOption<Self> {
-        todo!()
+        match try_inverse_u64(&self.0) {
+            Some(p) => CtOption::new(Self(p), Choice::from(1)),
+            None => CtOption::new(Self(0), Choice::from(0)),
+        }
     }
 
     /// Returns the square root of the field element, if it is
     /// quadratic residue.
     fn sqrt(&self) -> CtOption<Self> {
-        todo!()
+        let res = self.pow_vartime(&[0x7fffffff80000001]);
+        if res.square() == *self {
+            CtOption::new(res, Choice::from(1))
+        } else {
+            CtOption::new(Self::zero(), Choice::from(0))
+        }
+    }
+}
+
+impl AsRef<u64> for Goldilocks {
+    fn as_ref(&self) -> &u64 {
+        &self.0
     }
 }
 
@@ -86,50 +116,6 @@ impl PrimeField for Goldilocks {
     /// The prime field can be converted back and forth into this binary
     /// representation.
     type Repr = Self;
-
-    /// Interpret a string of numbers as a (congruent) prime field element.
-    /// Does not accept unnecessary leading zeroes or a blank string.
-    ///
-    /// # Security
-    ///
-    /// This method provides **no** constant-time guarantees.
-    fn from_str_vartime(s: &str) -> Option<Self> {
-        if s.is_empty() {
-            return None;
-        }
-
-        if s == "0" {
-            return Some(Self::zero());
-        }
-
-        let mut res = Self::zero();
-
-        let ten = Self::from(10);
-
-        let mut first_digit = true;
-
-        for c in s.chars() {
-            match c.to_digit(10) {
-                Some(c) => {
-                    if first_digit {
-                        if c == 0 {
-                            return None;
-                        }
-
-                        first_digit = false;
-                    }
-
-                    res.mul_assign(&ten);
-                    res.add_assign(&Self::from(u64::from(c)));
-                }
-                None => {
-                    return None;
-                }
-            }
-        }
-
-        Some(res)
-    }
 
     /// Attempts to convert a byte representation of a field element into an element of
     /// this prime field, failing if the input is not canonical (is not smaller than the
@@ -167,13 +153,7 @@ impl PrimeField for Goldilocks {
 
     /// Returns true iff this element is odd.
     fn is_odd(&self) -> Choice {
-        todo!()
-    }
-
-    /// Returns true iff this element is even.
-    #[inline(always)]
-    fn is_even(&self) -> Choice {
-        !self.is_odd()
+        Choice::from((self.0 & 1) as u8)
     }
 
     /// How many bits are needed to represent an element of this field.
@@ -218,15 +198,21 @@ impl From<u64> for Goldilocks {
     }
 }
 
+impl From<Goldilocks> for u64 {
+    fn from(input: Goldilocks) -> Self {
+        input.0
+    }
+}
+
 impl ConditionallySelectable for Goldilocks {
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
-        todo!()
+        Self(u64::conditional_select(&a.0, &b.0, choice))
     }
 }
 
 impl ConstantTimeEq for Goldilocks {
     fn ct_eq(&self, other: &Self) -> Choice {
-        todo!()
+        self.to_canonical_u64().ct_eq(&other.to_canonical_u64())
     }
 }
 
@@ -389,7 +375,7 @@ fn reduce128(x: u128) -> Goldilocks {
 
 impl Goldilocks {
     #[inline]
-    fn to_canonical_u64(&self) -> u64 {
+    pub fn to_canonical_u64(&self) -> u64 {
         let mut c = self.0;
         // We only need one condition subtraction, since 2 * ORDER would not fit in a u64.
         if c >= MODULUS {

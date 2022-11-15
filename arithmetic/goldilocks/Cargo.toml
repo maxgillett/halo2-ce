@@ -15,3 +15,9 @@ rand_core = "0.6.0"
 version = "2.2.1"
 features = ["i128"]
 default-features = false
+
+
+[dev-dependencies]
+criterion = { version = "0.3", features = ["html_reports"] }
+rand_xorshift = "0.3"
+ark-std = { version = "0.3", features = ["print-trace"] }
