@@ -1,9 +1,9 @@
 use crate::util::{add_no_canonicalize_trashing_input, branch_hint, split};
 use crate::util::{assume, try_inverse_u64};
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
-use std::fmt::{Display, Formatter};
 use ff::{Field, PrimeField};
 use rand_core::RngCore;
+use std::fmt::{Display, Formatter};
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
 /// Goldilocks field with modulus 2^64 - 2^32 + 1.
@@ -11,7 +11,7 @@ use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 /// where the value can be between 0 and 2^64.
 /// For unique representation of its form, use `to_canonical_u64`
 #[derive(Clone, Copy, Debug, Default, Eq)]
-pub struct Goldilocks(u64);
+pub struct Goldilocks(pub(crate) u64);
 
 impl PartialEq for Goldilocks {
     fn eq(&self, other: &Goldilocks) -> bool {
@@ -20,9 +20,9 @@ impl PartialEq for Goldilocks {
 }
 
 impl Display for Goldilocks {
-    fn fmt(&self, w: &mut Formatter<'_>) -> Result<(), std::fmt::Error> { 
+    fn fmt(&self, w: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(w, "{}", self.0)
-     }
+    }
 }
 
 /// 2^64 - 2^32 + 1
@@ -66,7 +66,7 @@ impl Field for Goldilocks {
     /// Doubles this element.
     #[must_use]
     fn double(&self) -> Self {
-        * self + *self
+        *self + *self
     }
 
     /// Computes the multiplicative inverse of this element,

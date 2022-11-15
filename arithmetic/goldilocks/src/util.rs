@@ -1,7 +1,9 @@
 use std::arch::asm;
 use std::hint::unreachable_unchecked;
 
-use crate::fp::MODULUS;
+use ff::Field;
+
+use crate::fp::{Goldilocks, MODULUS};
 
 #[inline(always)]
 pub fn assume(p: bool) {
@@ -147,9 +149,12 @@ pub(crate) fn try_inverse_u64(x: &u64) -> Option<u64> {
 
     // Precomputing the binary inverses rather than using inverse_2exp
     // saves ~5ns on my machine.
-    let res = (c as u64) * inverse_2exp(k as usize);
-    debug_assert!(*x * res == 1, "bug in try_inverse_u64");
-    Some(res)
+    let res = Goldilocks(c as u64) * Goldilocks(inverse_2exp(k as usize));
+    debug_assert!(
+        Goldilocks(*x) * res == Goldilocks::one(),
+        "bug in try_inverse_u64"
+    );
+    Some(res.0)
 }
 
 /// This is a 'safe' iteration for the modular inversion algorithm. It
@@ -222,6 +227,27 @@ fn inverse_2exp(exp: usize) -> u64 {
     // p - 1, so this division can be done with a simple bit shift. If
     // exp > t, we repeatedly multiply by 2^-t and reduce exp until it's in
     // the right range.
-    assume(exp <= 32);
-    MODULUS - ((MODULUS - 1) >> exp)
+
+    // NB: The only reason this is split into two cases is to save
+    // the multiplication (and possible calculation of
+    // inverse_2_pow_adicity) in the usual case that exp <=
+    // TWO_ADICITY. Can remove the branch and simplify if that
+    // saving isn't worth it.
+    let res = if exp > 32 {
+        // NB: This should be a compile-time constant
+        // MODULUS - ((MODULUS - 1) >> 32)
+        let inverse_2_pow_adicity = Goldilocks(0xfffffffe00000002);
+
+        let mut res = inverse_2_pow_adicity;
+        let mut e = exp - 32;
+
+        while e > 32 {
+            res *= inverse_2_pow_adicity;
+            e -= 32;
+        }
+        res * Goldilocks(MODULUS - ((MODULUS - 1) >> e))
+    } else {
+        Goldilocks(MODULUS - ((MODULUS - 1) >> exp))
+    };
+    res.0
 }

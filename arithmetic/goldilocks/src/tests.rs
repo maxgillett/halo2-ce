@@ -46,6 +46,7 @@ use rand_xorshift::XorShiftRng;
 #[test]
 fn test_field() {
     random_field_tests::<Goldilocks>("Goldilocks".to_string());
+    random_prime_field_tests::<Goldilocks>("Goldilocks".to_string());
 }
 
 pub fn random_field_tests<F: Field>(type_name: String) {
@@ -210,9 +211,8 @@ fn random_inversion_tests<F: Field, R: RngCore>(mut rng: R, type_name: String) {
     let start = start_timer!(|| message);
     for _ in 0..1000000 {
         let mut a = F::random(&mut rng);
-        let b = a.invert().unwrap(); // probablistically nonzero
+        let b = a.invert().unwrap(); // probabilistically nonzero
         a.mul_assign(&b);
-        println!("{:?} {:?}", a, b);
         assert_eq!(a, F::one());
     }
     end_timer!(start);
