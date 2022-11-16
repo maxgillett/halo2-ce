@@ -1,7 +1,8 @@
 use std::arch::asm;
 use std::hint::unreachable_unchecked;
 
-use ff::Field;
+use ff::{Field, PrimeField};
+use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
 use crate::fp::{Goldilocks, MODULUS};
 
@@ -250,4 +251,42 @@ fn inverse_2exp(exp: usize) -> u64 {
         Goldilocks(MODULUS - ((MODULUS - 1) >> exp))
     };
     res.0
+}
+
+pub(crate) fn sqrt_tonelli_shanks(f: &Goldilocks, tm1d2: u64) -> CtOption<Goldilocks> {
+    // w = self^((t - 1) // 2)
+    let w = f.pow_vartime(&[tm1d2]);
+
+    let mut v = Goldilocks::S;
+    let mut x = w * f;
+    let mut b = x * w;
+
+    // Initialize z as the 2^S root of unity.
+    let mut z = Goldilocks::root_of_unity();
+
+    for max_v in (1..=Goldilocks::S).rev() {
+        let mut k = 1;
+        let mut tmp = b.square();
+        let mut j_less_than_v: Choice = 1.into();
+
+        for j in 2..max_v {
+            let tmp_is_one = tmp.ct_eq(&Goldilocks::one());
+            let squared = Goldilocks::conditional_select(&tmp, &z, tmp_is_one).square();
+            tmp = Goldilocks::conditional_select(&squared, &tmp, tmp_is_one);
+            let new_z = Goldilocks::conditional_select(&z, &squared, tmp_is_one);
+            j_less_than_v &= !j.ct_eq(&v);
+            k = u32::conditional_select(&j, &k, tmp_is_one);
+            z = Goldilocks::conditional_select(&z, &new_z, j_less_than_v);
+        }
+
+        let result = x * z;
+        x = Goldilocks::conditional_select(&result, &x, b.ct_eq(&Goldilocks::one()));
+        z = z.square();
+        b *= z;
+        v = k;
+    }
+    CtOption::new(
+        x,
+        (x * x).ct_eq(f), // Only return Some if it's the square root.
+    )
 }

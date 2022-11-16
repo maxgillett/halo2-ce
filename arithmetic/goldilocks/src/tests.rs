@@ -1,4 +1,7 @@
+use std::ops::Neg;
+
 use crate::fp::Goldilocks;
+use crate::fp::LegendreSymbol;
 
 use ark_std::{end_timer, start_timer};
 use ff::Field;
@@ -7,41 +10,46 @@ use rand_core::RngCore;
 use rand_core::SeedableRng;
 use rand_xorshift::XorShiftRng;
 
-// #[test]
-// fn test_sqrt_fq() {
-//     let v = (Goldilocks::TWO_INV).square().sqrt().unwrap();
-//     assert!(v == Goldilocks::TWO_INV || (-v) == Goldilocks::TWO_INV);
+#[test]
+fn test_sqrt_fq() {
+    let mut rng = XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
 
-//     for _ in 0..10000 {
-//         let a = Goldilocks::random(OsRng);
-//         let mut b = a;
-//         b = b.square();
-//         assert_eq!(b.legendre(), LegendreSymbol::QuadraticResidue);
+    let two_inv = Goldilocks(0x7fffffff80000001);
+    let v = two_inv.square().sqrt().unwrap();
+    assert!(v == two_inv || (-v) == two_inv);
 
-//         let b = b.sqrt().unwrap();
-//         let mut negb = b;
-//         negb = negb.neg();
+    for _ in 0..10000 {
+        let a = Goldilocks::random(&mut rng);
+        let mut b = a;
+        b = b.square();
+        assert_eq!(b.legendre(), LegendreSymbol::QuadraticResidue);
 
-//         assert!(a == b || a == negb);
-//     }
+        let b = b.sqrt().unwrap();
+        let mut negb = b;
+        negb = negb.neg();
+        assert!(a == b || a == negb);
+    }
 
-//     let mut c = Goldilocks::one();
-//     for _ in 0..10000 {
-//         let mut b = c;
-//         b = b.square();
-//         assert_eq!(b.legendre(), LegendreSymbol::QuadraticResidue);
+    let mut c = Goldilocks::one();
+    for _ in 0..10000 {
+        let mut b = c;
+        b = b.square();
+        assert_eq!(b.legendre(), LegendreSymbol::QuadraticResidue);
 
-//         b = b.sqrt().unwrap();
+        b = b.sqrt().unwrap();
 
-//         if b != c {
-//             b = b.neg();
-//         }
+        if b != c {
+            b = b.neg();
+        }
 
-//         assert_eq!(b, c);
+        assert_eq!(b, c);
 
-//         c += &Goldilocks::one();
-//     }
-// }
+        c += &Goldilocks::one();
+    }
+}
 
 #[test]
 fn test_field() {

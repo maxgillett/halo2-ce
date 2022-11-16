@@ -1,7 +1,8 @@
-use crate::util::{add_no_canonicalize_trashing_input, branch_hint, split};
+use crate::util::{add_no_canonicalize_trashing_input, branch_hint, split, sqrt_tonelli_shanks};
 use crate::util::{assume, try_inverse_u64};
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use ff::{Field, PrimeField};
+use pasta_curves::arithmetic::SqrtRatio;
 use rand_core::RngCore;
 use std::fmt::{Display, Formatter};
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
@@ -81,12 +82,16 @@ impl Field for Goldilocks {
     /// Returns the square root of the field element, if it is
     /// quadratic residue.
     fn sqrt(&self) -> CtOption<Self> {
-        let res = self.pow_vartime(&[0x7fffffff80000001]);
-        if res.square() == *self {
-            CtOption::new(res, Choice::from(1))
-        } else {
-            CtOption::new(Self::zero(), Choice::from(0))
-        }
+        sqrt_tonelli_shanks(self, <Self as SqrtRatio>::T_MINUS1_OVER2[0])
+    }
+}
+
+impl SqrtRatio for Goldilocks {
+    /// `(t - 1) // 2` where t * 2^s + 1 = p with t odd.
+    const T_MINUS1_OVER2: [u64; 4] = [2147483647, 0, 0, 0];
+
+    fn get_lower_32(&self) -> u32 {
+        self.0 as u32
     }
 }
 
@@ -383,4 +388,29 @@ impl Goldilocks {
         }
         c
     }
+
+    pub const fn size() -> usize {
+        8
+    }
+
+    pub fn legendre(&self) -> LegendreSymbol {
+        // s = self^((modulus - 1) // 2)
+        // 9223372034707292160
+        let s = 0x7fffffff80000000;
+        let s = self.pow_vartime(&[s]);
+        if s == Self::zero() {
+            LegendreSymbol::Zero
+        } else if s == Self::one() {
+            LegendreSymbol::QuadraticResidue
+        } else {
+            LegendreSymbol::QuadraticNonResidue
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum LegendreSymbol {
+    Zero = 0,
+    QuadraticResidue = 1,
+    QuadraticNonResidue = -1,
 }
