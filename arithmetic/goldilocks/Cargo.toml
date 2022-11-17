@@ -16,8 +16,13 @@ version = "2.2.1"
 features = ["i128"]
 default-features = false
 
-
 [dev-dependencies]
 criterion = { version = "0.3", features = ["html_reports"] }
 rand_xorshift = "0.3"
 ark-std = { version = "0.3", features = ["print-trace"] }
+winter_math = { package = "winter-math", git = "https://github.com/novifinancial/winterfell" }
+winter_rand_utils = { package = "winter-rand-utils", git = "https://github.com/novifinancial/winterfell" }
+
+[[bench]]
+name = "mul"
+harness = false
