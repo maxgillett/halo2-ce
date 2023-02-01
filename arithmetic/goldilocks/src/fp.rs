@@ -1,7 +1,10 @@
 use crate::util::{add_no_canonicalize_trashing_input, branch_hint, split};
 use crate::util::{assume, try_inverse_u64};
+use crate::Field64;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use ff::{Field, PrimeField};
+use halo2curves::{FieldExt, Group};
+use pasta_curves::arithmetic::SqrtRatio;
 use rand_core::RngCore;
 use std::fmt::{Display, Formatter};
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
@@ -10,8 +13,8 @@ use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 /// A Goldilocks field may store a non-canonical form of the element
 /// where the value can be between 0 and 2^64.
 /// For unique representation of its form, use `to_canonical_u64`
-#[derive(Clone, Copy, Debug, Default, Eq)]
-pub struct Goldilocks(u64);
+#[derive(Clone, Copy, Ord, PartialOrd, Debug, Default, Eq)]
+pub struct Goldilocks(pub u64);
 
 impl PartialEq for Goldilocks {
     fn eq(&self, other: &Goldilocks) -> bool {
@@ -373,14 +376,143 @@ fn reduce128(x: u128) -> Goldilocks {
     Goldilocks(t2)
 }
 
-impl Goldilocks {
+impl Field64 for Goldilocks {
+    const ORDER: u64 = MODULUS;
+
     #[inline]
-    pub fn to_canonical_u64(&self) -> u64 {
+    fn from_noncanonical_u64(n: u64) -> Self {
+        Self(n)
+    }
+
+    #[inline]
+    fn from_noncanonical_i64(n: i64) -> Self {
+        Self::from_canonical_u64(if n < 0 {
+            // If n < 0, then this is guaranteed to overflow since
+            // both arguments have their high bit set, so the result
+            // is in the canonical range.
+            MODULUS.wrapping_add(n as u64)
+        } else {
+            n as u64
+        })
+    }
+
+    #[inline]
+    unsafe fn add_canonical_u64(&self, rhs: u64) -> Self {
+        let (res_wrapped, carry) = self.0.overflowing_add(rhs);
+        // Add EPSILON * carry cannot overflow unless rhs is not in canonical form.
+        Self(res_wrapped + EPSILON * (carry as u64))
+    }
+
+    #[inline]
+    unsafe fn sub_canonical_u64(&self, rhs: u64) -> Self {
+        let (res_wrapped, borrow) = self.0.overflowing_sub(rhs);
+        // Sub EPSILON * carry cannot underflow unless rhs is not in canonical form.
+        Self(res_wrapped - EPSILON * (borrow as u64))
+    }
+
+    #[inline(always)]
+    fn from_canonical_u64(n: u64) -> Self {
+        debug_assert!(n < Self::ORDER);
+        Self(n)
+    }
+
+    #[inline]
+    fn to_canonical_u64(&self) -> u64 {
         let mut c = self.0;
         // We only need one condition subtraction, since 2 * ORDER would not fit in a u64.
         if c >= MODULUS {
             c -= MODULUS;
         }
         c
+    }
+
+    #[inline(always)]
+    fn to_noncanonical_u64(&self) -> u64 {
+        self.0
+    }
+
+    fn from_noncanonical_u128(n: u128) -> Self {
+        reduce128(n)
+    }
+
+    #[inline]
+    fn multiply_accumulate(&self, x: Self, y: Self) -> Self {
+        // u64 + u64 * u64 cannot overflow.
+        reduce128((self.0 as u128) + (x.0 as u128) * (y.0 as u128))
+    }
+}
+
+impl FieldExt for Goldilocks {
+    const MODULUS: &'static str = "0xffffffff00000001";
+    const TWO_INV: Self = Self(9223372034707292161);
+    const ROOT_OF_UNITY_INV: Self = Self(8554224884056360729);
+    const DELTA: Self = Self(1); // TODO
+    const ZETA: Self = Self(0); // TODO
+
+    fn from_u128(v: u128) -> Self {
+        unimplemented!()
+    }
+
+    fn from_bytes_wide(bytes: &[u8; 64]) -> Self {
+        unimplemented!()
+    }
+
+    fn get_lower_128(&self) -> u128 {
+        unimplemented!()
+    }
+}
+
+impl SqrtRatio for Goldilocks {
+    const T_MINUS1_OVER2: [u64; 4] = [0, 0, 0, 0];
+
+    fn pow_by_t_minus1_over2(&self) -> Self {
+        unimplemented!();
+    }
+
+    fn get_lower_32(&self) -> u32 {
+        unimplemented!();
+    }
+
+    #[cfg(feature = "sqrt-table")]
+    fn sqrt_ratio(num: &Self, div: &Self) -> (Choice, Self) {
+        unimplemented!();
+    }
+
+    #[cfg(feature = "sqrt-table")]
+    fn sqrt_alt(&self) -> (Choice, Self) {
+        unimplemented!();
+    }
+}
+
+impl Group for Goldilocks {
+    type Scalar = Goldilocks;
+
+    fn group_zero() -> Self {
+        Self::zero()
+    }
+    fn group_add(&mut self, rhs: &Self) {
+        *self += *rhs;
+    }
+    fn group_sub(&mut self, rhs: &Self) {
+        *self -= *rhs;
+    }
+    fn group_scale(&mut self, by: &Self::Scalar) {
+        *self *= *by;
+    }
+}
+
+impl From<bool> for Goldilocks {
+    fn from(bit: bool) -> Self {
+        if bit {
+            Self::one()
+        } else {
+            Self::zero()
+        }
+    }
+}
+
+impl Goldilocks {
+    pub fn from_bytes(bytes: &[u8; 8]) -> CtOption<Self> {
+        Self::from_repr(Goldilocks(u64::from_le_bytes(*bytes)))
     }
 }
