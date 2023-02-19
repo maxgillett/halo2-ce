@@ -1,7 +1,10 @@
 use std::arch::asm;
 use std::hint::unreachable_unchecked;
 
-use crate::fp::{EPSILON, MODULUS};
+use crate::fp::{
+    reduce128, Goldilocks as Fp, EPSILON, INVERSE_TWO_POW_ADICITY, MODULUS, TWO_ADICITY,
+};
+use curves::Field64;
 
 #[inline(always)]
 pub fn assume(p: bool) {
@@ -114,6 +117,7 @@ pub(crate) fn try_inverse_u64(x: &u64) -> Option<u64> {
     if f == 1 {
         // c must be -1 or 1 here.
         if c == -1 {
+            let a = inverse_2exp(k as usize);
             return Some(MODULUS - inverse_2exp(k as usize));
         }
         debug_assert!(c == 1, "bug in try_inverse_u64");
@@ -147,8 +151,9 @@ pub(crate) fn try_inverse_u64(x: &u64) -> Option<u64> {
 
     // Precomputing the binary inverses rather than using inverse_2exp
     // saves ~5ns on my machine.
-    let res = (c as u64) * inverse_2exp(k as usize);
+    let res = reduce128((c as u128) * inverse_2exp(k as usize) as u128).to_noncanonical_u64();
     debug_assert!(*x * res == 1, "bug in try_inverse_u64");
+
     Some(res)
 }
 
@@ -222,6 +227,17 @@ fn inverse_2exp(exp: usize) -> u64 {
     // p - 1, so this division can be done with a simple bit shift. If
     // exp > t, we repeatedly multiply by 2^-t and reduce exp until it's in
     // the right range.
-    assume(exp <= 32);
-    MODULUS - ((MODULUS - 1) >> exp)
+
+    if exp > TWO_ADICITY {
+        let mut res = Fp(INVERSE_TWO_POW_ADICITY);
+        let mut e = exp - TWO_ADICITY;
+
+        while e > TWO_ADICITY {
+            res *= Fp(INVERSE_TWO_POW_ADICITY);
+            e -= TWO_ADICITY;
+        }
+        (res * Fp(MODULUS - ((MODULUS - 1) >> e))).to_canonical_u64()
+    } else {
+        MODULUS - ((MODULUS - 1) >> exp)
+    }
 }

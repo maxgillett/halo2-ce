@@ -1,10 +1,10 @@
-use crate::fp::Goldilocks as Fp;
+use crate::fp::Goldilocks as Fp; //, FieldExtension};
 use crate::util::{add_no_canonicalize_trashing_input, branch_hint, split};
 use crate::util::{assume, try_inverse_u64};
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use curves::{FieldExt, Group};
 use ff::{Field, PrimeField};
-use halo2curves::{FieldExt, Group};
-use pasta_curves::arithmetic::SqrtRatio;
+use pasta_curves::arithmetic::{Extendable, FieldExtension, SqrtRatio};
 use rand_core::RngCore;
 use std::cmp::Ordering;
 use std::fmt::{Display, Formatter};
@@ -118,12 +118,12 @@ impl PrimeField for GoldilocksExtension {
     }
 
     /// How many bits are needed to represent an element of this field.
-    const NUM_BITS: u32 = 64;
+    const NUM_BITS: u32 = 128;
 
     /// How many bits of information can be reliably stored in the field element.
     ///
     /// This is usually `Self::NUM_BITS - 1`.
-    const CAPACITY: u32 = 63;
+    const CAPACITY: u32 = 127;
 
     /// Returns a fixed multiplicative generator of `modulus - 1` order. This element must
     /// also be a quadratic nonresidue.
@@ -425,5 +425,19 @@ impl GoldilocksExtension {
 
     pub fn to_bytes(&self) -> [u8; 16] {
         Self::to_repr(self).0
+    }
+}
+
+impl FieldExtension<2> for GoldilocksExtension {
+    type BaseField = Fp;
+
+    fn to_base_elements(&self) -> Vec<Self::BaseField> {
+        vec![self.0[0], self.0[1]]
+    }
+}
+
+impl From<Fp> for GoldilocksExtension {
+    fn from(f: Fp) -> Self {
+        GoldilocksExtension::new(Fp::zero(), f)
     }
 }

@@ -1,10 +1,12 @@
+use super::fp2::GoldilocksExtension as Fp2; //, Extendable};
 use crate::util::{add_no_canonicalize_trashing_input, branch_hint, split};
 use crate::util::{assume, try_inverse_u64};
-use crate::Field64;
+use core::fmt::Debug;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use curves::{Field64, FieldExt, Group};
 use ff::{Field, PrimeField};
-use halo2curves::{FieldExt, Group};
-use pasta_curves::arithmetic::SqrtRatio;
+//use pasta_curves::arithmetic::SqrtRatio;
+use pasta_curves::arithmetic::{Extendable, FieldExtension, SqrtRatio};
 use rand_core::RngCore;
 use std::fmt::{Display, Formatter};
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
@@ -13,7 +15,7 @@ use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 /// A Goldilocks field may store a non-canonical form of the element
 /// where the value can be between 0 and 2^64.
 /// For unique representation of its form, use `to_canonical_u64`
-#[derive(Clone, Copy, Ord, PartialOrd, Debug, Default, Eq)]
+#[derive(Clone, Copy, Ord, PartialOrd, Default, Eq)]
 pub struct Goldilocks(pub u64);
 
 impl PartialEq for Goldilocks {
@@ -28,10 +30,18 @@ impl Display for Goldilocks {
     }
 }
 
+impl Debug for Goldilocks {
+    fn fmt(&self, w: &mut Formatter) -> Result<(), std::fmt::Error> {
+        write!(w, "{:#x}", self.0)
+    }
+}
+
 /// 2^64 - 2^32 + 1
 pub const MODULUS: u64 = 0xffffffff00000001;
 /// 2^32 - 1
 pub const EPSILON: u64 = 0xffffffff;
+pub const TWO_ADICITY: usize = 32;
+pub const INVERSE_TWO_POW_ADICITY: u64 = 18446744065119617026;
 
 impl Field for Goldilocks {
     /// Returns an element chosen uniformly at random using a user-provided RNG.
@@ -101,7 +111,8 @@ impl AsRef<u64> for Goldilocks {
 
 impl AsMut<[u8]> for Goldilocks {
     fn as_mut(&mut self) -> &mut [u8] {
-        todo!()
+        let ptr = self as *const Self as *mut u8;
+        unsafe { std::slice::from_raw_parts_mut(ptr, 8) }
     }
 }
 
@@ -184,7 +195,7 @@ impl PrimeField for Goldilocks {
     ///
     /// This is the number of leading zero bits in the little-endian bit representation of
     /// `modulus - 1`.
-    const S: u32 = 32;
+    const S: u32 = TWO_ADICITY as u32;
 
     /// Returns the `2^s` root of unity.
     ///
@@ -361,7 +372,7 @@ impl<'a> MulAssign<&'a Goldilocks> for Goldilocks {
 /// Reduces to a 64-bit value. The result might not be in canonical form; it could be in between the
 /// field order and `2^64`.
 #[inline]
-fn reduce128(x: u128) -> Goldilocks {
+pub fn reduce128(x: u128) -> Goldilocks {
     let (x_lo, x_hi) = split(x); // This is a no-op
     let x_hi_hi = x_hi >> 32;
     let x_hi_lo = x_hi & EPSILON;
@@ -470,7 +481,7 @@ impl SqrtRatio for Goldilocks {
     }
 
     fn get_lower_32(&self) -> u32 {
-        unimplemented!();
+        self.0 as u32
     }
 
     #[cfg(feature = "sqrt-table")]
@@ -515,4 +526,9 @@ impl Goldilocks {
     pub fn from_bytes(bytes: &[u8; 8]) -> CtOption<Self> {
         Self::from_repr(Goldilocks(u64::from_le_bytes(*bytes)))
     }
+}
+
+impl Extendable<2> for Goldilocks {
+    type BaseField = Self;
+    type Extension = Fp2;
 }
