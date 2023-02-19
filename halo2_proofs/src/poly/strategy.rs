@@ -1,4 +1,4 @@
-use halo2curves::CurveAffine;
+use curves::CurveAffine;
 use rand_core::RngCore;
 
 use super::commitment::{CommitmentScheme, Verifier, MSM};

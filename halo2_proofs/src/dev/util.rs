@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
+use curves::FieldExt;
 use group::ff::Field;
-use halo2curves::FieldExt;
 
 use super::{metadata, CellValue, Value};
 use crate::{

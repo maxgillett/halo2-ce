@@ -21,7 +21,7 @@ use crate::transcript::{EncodedChallenge, TranscriptRead};
 
 use ff::Field;
 use group::Group;
-use halo2curves::pairing::{Engine, MillerLoopResult, MultiMillerLoop};
+use curves::pairing::{Engine, MillerLoopResult, MultiMillerLoop};
 use rand_core::OsRng;
 
 #[derive(Debug)]

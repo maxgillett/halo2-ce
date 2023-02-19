@@ -6,7 +6,7 @@ use crate::{
     poly::commitment::MSM,
 };
 use group::{Curve, Group};
-use halo2curves::pairing::{Engine, MillerLoopResult, MultiMillerLoop};
+use curves::pairing::{Engine, MillerLoopResult, MultiMillerLoop};
 
 /// A multiscalar multiplication in the polynomial commitment scheme
 #[derive(Clone, Default, Debug)]

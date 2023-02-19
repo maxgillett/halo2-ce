@@ -27,7 +27,7 @@
 
 pub mod arithmetic;
 pub mod circuit;
-pub use halo2curves;
+pub use curves;
 mod multicore;
 pub mod plonk;
 pub mod poly;

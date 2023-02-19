@@ -323,7 +323,7 @@ impl TryFrom<Column<Any>> for Column<Instance> {
 /// Selectors can be used to conditionally enable (portions of) gates:
 /// ```
 /// use halo2_proofs::poly::Rotation;
-/// # use halo2curves::pasta::Fp;
+/// # use curves::pasta::Fp;
 /// # use halo2_proofs::plonk::ConstraintSystem;
 ///
 /// # let mut meta = ConstraintSystem::<Fp>::default();
@@ -1194,7 +1194,7 @@ impl<F: Field> From<Expression<F>> for Vec<Constraint<F>> {
 ///
 /// ```
 /// use halo2_proofs::{plonk::{Constraints, Expression}, poly::Rotation};
-/// use halo2curves::pasta::Fp;
+/// use curves::pasta::Fp;
 /// # use halo2_proofs::plonk::ConstraintSystem;
 ///
 /// # let mut meta = ConstraintSystem::<Fp>::default();

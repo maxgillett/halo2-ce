@@ -495,7 +495,7 @@ impl<'r, 'a, F: Field, CS: Assignment<F> + 'a> RegionLayouter<F> for V1Region<'r
 
 #[cfg(test)]
 mod tests {
-    use halo2curves::pasta::vesta;
+    use curves::pasta::vesta;
 
     use crate::{
         dev::MockProver,

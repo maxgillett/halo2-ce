@@ -1,6 +1,6 @@
 use std::io;
 
-use halo2curves::CurveAffine;
+use curves::CurveAffine;
 
 pub(crate) trait CurveRead: CurveAffine {
     /// Reads a compressed element from the buffer and attempts to parse it

@@ -1,6 +1,6 @@
 use ff::Field;
 use group::Curve;
-use halo2curves::CurveExt;
+use curves::CurveExt;
 use rand_core::RngCore;
 use std::collections::BTreeSet;
 use std::env::var;

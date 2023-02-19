@@ -181,7 +181,7 @@ impl<F: Group + Field> Mul<F> for Value<F> {
 ///     plonk::{Advice, Any, Circuit, Column, ConstraintSystem, Error, Selector},
 ///     poly::Rotation,
 /// };
-/// use halo2curves::pasta::Fp;
+/// use curves::pasta::Fp;
 /// const K: u32 = 5;
 ///
 /// #[derive(Copy, Clone)]
@@ -1319,7 +1319,7 @@ impl<F: FieldExt> MockProver<F> {
 
 #[cfg(test)]
 mod tests {
-    use halo2curves::pasta::Fp;
+    use curves::pasta::Fp;
 
     use super::{FailureLocation, MockProver, VerifyFailure};
     use crate::{

@@ -18,7 +18,7 @@ mod test {
     };
     use ff::Field;
     use group::{Curve, Group};
-    use halo2curves::CurveAffine;
+    use curves::CurveAffine;
     use rand_core::{OsRng, RngCore};
     use std::io::{Read, Write};
 
@@ -27,7 +27,7 @@ mod test {
         use crate::poly::ipa::commitment::{IPACommitmentScheme, ParamsIPA};
         use crate::poly::ipa::multiopen::{ProverIPA, VerifierIPA};
         use crate::poly::ipa::strategy::AccumulatorStrategy;
-        use halo2curves::pasta::{Ep, EqAffine, Fp};
+        use curves::pasta::{Ep, EqAffine, Fp};
 
         const K: u32 = 4;
 
@@ -64,8 +64,8 @@ mod test {
         use crate::poly::kzg::commitment::{KZGCommitmentScheme, ParamsKZG};
         use crate::poly::kzg::multiopen::{ProverGWC, VerifierGWC};
         use crate::poly::kzg::strategy::AccumulatorStrategy;
-        use halo2curves::bn256::{Bn256, G1Affine};
-        use halo2curves::pairing::Engine;
+        use curves::bn256::{Bn256, G1Affine};
+        use curves::pairing::Engine;
 
         const K: u32 = 4;
 
@@ -96,8 +96,8 @@ mod test {
         use crate::poly::kzg::commitment::{KZGCommitmentScheme, ParamsKZG};
         use crate::poly::kzg::multiopen::{ProverSHPLONK, VerifierSHPLONK};
         use crate::poly::kzg::strategy::AccumulatorStrategy;
-        use halo2curves::bn256::{Bn256, G1Affine};
-        use halo2curves::pairing::Engine;
+        use curves::bn256::{Bn256, G1Affine};
+        use curves::pairing::Engine;
 
         const K: u32 = 4;
 

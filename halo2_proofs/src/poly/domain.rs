@@ -490,7 +490,7 @@ fn test_rotate() {
     use rand_core::OsRng;
 
     use crate::arithmetic::eval_polynomial;
-    use halo2curves::pasta::pallas::Scalar;
+    use curves::pasta::pallas::Scalar;
 
     let domain = EvaluationDomain::<Scalar>::new(1, 3);
     let rng = OsRng;
@@ -531,7 +531,7 @@ fn test_l_i() {
     use rand_core::OsRng;
 
     use crate::arithmetic::{eval_polynomial, lagrange_interpolate};
-    use halo2curves::pasta::pallas::Scalar;
+    use curves::pasta::pallas::Scalar;
     let domain = EvaluationDomain::<Scalar>::new(1, 3);
 
     let mut l = vec![];

@@ -167,7 +167,7 @@ mod proptests {
 
     use super::{construct_intermediate_sets, Commitment, IntermediateSets};
     use crate::poly::Rotation;
-    use halo2curves::{pasta::Fp, FieldExt};
+    use curves::{pasta::Fp, FieldExt};
 
     use std::collections::BTreeMap;
     use std::convert::TryFrom;

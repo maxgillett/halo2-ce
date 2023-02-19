@@ -7,7 +7,7 @@ use crate::poly::{Coeff, LagrangeCoeff, Polynomial};
 
 use ff::{Field, PrimeField};
 use group::{prime::PrimeCurveAffine, Curve, Group as _};
-use halo2curves::pairing::Engine;
+use curves::pairing::Engine;
 use rand_core::{OsRng, RngCore};
 use std::fmt::Debug;
 use std::marker::PhantomData;
@@ -292,7 +292,7 @@ mod test {
 
     use ff::{Field, PrimeField};
     use group::{prime::PrimeCurveAffine, Curve, Group as _};
-    use halo2curves::bn256::G1Affine;
+    use curves::bn256::G1Affine;
     use std::marker::PhantomData;
     use std::ops::{Add, AddAssign, Mul, MulAssign};
 
@@ -305,7 +305,7 @@ mod test {
         use rand_core::OsRng;
 
         use crate::poly::EvaluationDomain;
-        use halo2curves::bn256::{Bn256, Fr};
+        use curves::bn256::{Bn256, Fr};
 
         let params = ParamsKZG::<Bn256>::new(K);
         let domain = EvaluationDomain::new(1, K);
@@ -332,7 +332,7 @@ mod test {
 
         use super::super::commitment::{Blind, Params};
         use crate::arithmetic::{eval_polynomial, FieldExt};
-        use crate::halo2curves::bn256::{Bn256, Fr};
+        use crate::curves::bn256::{Bn256, Fr};
         use crate::poly::EvaluationDomain;
 
         let params0 = ParamsKZG::<Bn256>::new(K);

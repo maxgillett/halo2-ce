@@ -7,7 +7,7 @@ use crate::poly::Error;
 use crate::transcript::{EncodedChallenge, TranscriptRead, TranscriptWrite};
 use ff::Field;
 use group::Curve;
-use halo2curves::{CurveAffine, CurveExt, FieldExt};
+use curves::{CurveAffine, CurveExt, FieldExt};
 use rand_core::RngCore;
 use std::{
     fmt::Debug,
@@ -18,7 +18,7 @@ use std::{
 /// Defines components of a commitment scheme.
 pub trait CommitmentScheme {
     /// Application field of this commitment scheme
-    type Scalar: FieldExt + halo2curves::Group;
+    type Scalar: FieldExt + curves::Group;
 
     /// Elliptic curve used to commit the application and witnesses
     type Curve: CurveAffine<ScalarExt = Self::Scalar>;

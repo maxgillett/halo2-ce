@@ -258,7 +258,7 @@ mod test {
         use rand_core::OsRng;
 
         use crate::poly::EvaluationDomain;
-        use halo2curves::pasta::{EpAffine, Fq};
+        use curves::pasta::{EpAffine, Fq};
 
         let params = ParamsIPA::<EpAffine>::new(K);
         let domain = EvaluationDomain::new(1, K);
@@ -283,7 +283,7 @@ mod test {
         use rand_core::OsRng;
 
         use crate::poly::EvaluationDomain;
-        use halo2curves::pasta::{EqAffine, Fp};
+        use curves::pasta::{EqAffine, Fp};
 
         let params: ParamsIPA<EqAffine> = ParamsIPA::<EqAffine>::new(K);
         let domain = EvaluationDomain::new(1, K);
@@ -310,7 +310,7 @@ mod test {
 
         use super::super::commitment::{Blind, Params};
         use crate::arithmetic::{eval_polynomial, FieldExt};
-        use crate::halo2curves::pasta::{EpAffine, Fq};
+        use crate::curves::pasta::{EpAffine, Fq};
         use crate::poly::EvaluationDomain;
         use crate::transcript::{
             Blake2bRead, Blake2bWrite, Challenge255, Transcript, TranscriptRead, TranscriptWrite,

@@ -16,7 +16,7 @@ use crate::{
 };
 use ff::Field;
 use group::Curve;
-use halo2curves::CurveAffine;
+use curves::CurveAffine;
 use rand_core::{OsRng, RngCore};
 
 /// Wrapper for verification accumulator

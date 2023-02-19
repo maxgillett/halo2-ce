@@ -16,7 +16,7 @@ use crate::{
 };
 use ff::Field;
 use group::Group;
-use halo2curves::{
+use curves::{
     pairing::{Engine, MillerLoopResult, MultiMillerLoop},
     CurveAffine,
 };

@@ -6,7 +6,7 @@ use crate::{
     poly::{commitment, Coeff, Polynomial},
 };
 use ff::Field;
-use halo2curves::CurveAffine;
+use curves::CurveAffine;
 
 pub trait Query<F>: Sized + Clone {
     type Commitment: PartialEq + Copy;

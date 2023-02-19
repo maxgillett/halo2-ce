@@ -15,7 +15,7 @@ use crate::transcript::{EncodedChallenge, TranscriptWrite};
 
 use ff::Field;
 use group::Curve;
-use halo2curves::pairing::Engine;
+use curves::pairing::Engine;
 use rand_core::RngCore;
 use std::fmt::Debug;
 use std::io::{self, Write};

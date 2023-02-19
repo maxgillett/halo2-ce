@@ -229,7 +229,7 @@ mod tests {
         ipa::msm::MSMIPA,
     };
     use group::Curve;
-    use halo2curves::{
+    use curves::{
         pasta::{Ep, EpAffine, Fp, Fq},
         CurveAffine,
     };
