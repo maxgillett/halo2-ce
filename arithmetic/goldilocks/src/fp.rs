@@ -465,7 +465,7 @@ impl FieldExt for Goldilocks {
     }
 
     fn from_bytes_wide(bytes: &[u8; 64]) -> Self {
-        unimplemented!()
+        Goldilocks(u64::from_le_bytes(bytes[..8].try_into().unwrap()))
     }
 
     fn get_lower_128(&self) -> u128 {
